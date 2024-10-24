@@ -1,0 +1,178 @@
+from typing import Dict, List
+
+import pandas as pd
+import polyline
+import numpy as np
+
+# 1
+from typing import List
+def reverse_by_n_elements(lst: List[int], n: int) -> List[int]:
+   
+    result = []  
+    length = len(lst) 
+
+    for i in range(0, length, n):
+        group = []
+        for j in range(i, min(i + n, length)):
+            group.append(lst[j])
+        
+        reversed_group = []
+        for j in range(len(group)):
+            reversed_group.append(group[len(group) - 1 - j])
+        
+        result.extend(reversed_group)
+
+    return lst  
+
+#2
+def group_by_length(lst: List[str]) -> Dict[int, List[str]]:
+    length_dict = {}
+
+    for word in lst:
+        word = word.strip()  
+        length = len(word)
+        if length not in length_dict:
+            length_dict[length] = []
+        length_dict[length].append(word)
+
+    return dict(sorted(length_dict.items()))
+    
+#3
+from typing import Dict, Any
+def flatten_dict(nested_dict: Dict[str, Any], sep: str = '.') -> Dict[str, Any]:
+    flattened = {}  
+
+    def _flatten(nested_dict: Dict[str, Any], parent_key: str = ''):
+        for key, value in nested_dict.items():
+            new_key = f"{parent_key}{sep}{key}" if parent_key else key
+            
+            if isinstance(value, dict):
+                _flatten(value, new_key)
+            elif isinstance(value, list):
+                for i, v in enumerate(value):
+                    list_key = f"{new_key}[{i}]"
+                    if isinstance(v, dict):
+                        _flatten(v, list_key)
+                    else:
+                        flattened[list_key] = v
+            else:
+                flattened[new_key] = value
+
+    _flatten(nested_dict)  
+    return dict(flattened) 
+    
+#4
+from typing import List
+
+def unique_permutations(nums: List[int]) -> List[List[int]]:
+    
+    def backtrack(start: int):
+        if start == len(nums):
+            result.append(nums[:])  
+            return
+        
+        seen = set()  
+        for i in range(start, len(nums)):
+            if nums[i] not in seen: 
+                seen.add(nums[i]) 
+                nums[start], nums[i] = nums[i], nums[start]  
+                backtrack(start + 1)  
+                nums[start], nums[i] = nums[i], nums[start]  
+
+    result = []
+    nums.sort()  
+    backtrack(0)
+    return result
+pass  
+
+#5
+import re
+from typing import List
+
+def find_all_dates(text: str) -> List[str]:
+    patterns = [
+        r'\b\d{2}-\d{2}-\d{4}\b',  
+        r'\b\d{2}/\d{2}/\d{4}\b',  
+        r'\b\d{4}\.\d{2}\.\d{2}\b'  
+    ]
+
+    combined_pattern = '|'.join(patterns)
+
+    matches = re.findall(combined_pattern, text)
+
+    return matches  
+pass
+
+    
+#6
+def polyline_to_dataframe(polyline_str: str) -> pd.DataFrame:
+    def haversine(coord1, coord2):
+        
+        lat1, lon1 = np.radians(coord1)
+        lat2, lon2 = np.radians(coord2)
+
+        dlon = lon2 - lon1 
+        dlat = lat2 - lat1 
+        a = np.sin(dlat/2)**2 + np.cos(lat1) * np.cos(lat2) * np.sin(dlon/2)**2
+        c = 2 * np.arcsin(np.sqrt(a)) 
+        r = 6371000  
+        return c * r
+
+    decoded_coords = polyline.decode(polyline_str)
+    df = pd.DataFrame(decoded_coords, columns=['latitude', 'longitude'])
+    df['distance'] = 0.0
+
+    for i in range(1, len(df)):
+        df.at[i, 'distance'] = haversine(
+            (df.at[i-1, 'latitude'], df.at[i-1, 'longitude']),
+            (df.at[i, 'latitude'], df.at[i, 'longitude'])
+        )
+
+    return pd.DataFrame()
+#7
+def rotate_and_multiply_matrix(matrix: List[List[int]]) -> List[List[int]]:
+    n = len(matrix)  
+    rotated_matrix = [[0] * n for _ in range(n)]  # Create an empty matrix for the rotated version
+
+    for i in range(n):
+        for j in range(n):
+            rotated_matrix[j][n - 1 - i] = matrix[i][j]
+
+    transformed_matrix = [[0] * n for _ in range(n)]  
+    for i in range(n):
+        for j in range(n):
+            original_row = n - 1 - j
+            original_col = i
+            
+            transformed_matrix[i][j] = rotated_matrix[i][j] * (original_row + original_col)
+
+    return []
+
+#8
+import pandas as pd
+def time_check(df) -> pd.Series:
+    df['start'] = pd.to_datetime(df['startDay'] + ' ' + df['startTime'])
+    df['end'] = pd.to_datetime(df['endDay'] + ' ' + df['endTime'])
+
+    grouped = df.groupby(['id', 'id_2'])
+
+    result = pd.Series(index=grouped.groups.keys(), dtype=bool)
+
+    def check_completeness(group: pd.DataFrame) -> bool:
+        start_time = group['start'].dt.time.min()
+        end_time = group['end'].dt.time.max()
+        
+        full_day_coverage = start_time <= pd.to_datetime("00:00:00").time() and end_time >= pd.to_datetime("23:59:59").time()
+        
+        all_days = pd.date_range(start=group['start'].min(), end=group['end'].max()).date
+        spans_all_days = len(set(all_days)) == 7
+
+        return not (full_day_coverage and spans_all_days)
+
+    for key, group in grouped:
+        result[key] = check_completeness(group)
+
+    return pd.Series()
+
+
+    
